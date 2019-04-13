@@ -1,0 +1,114 @@
+.Dd April 11, 2019
+.Dt DLDNS 1
+.Os
+.Sh NAME
+.Nm dldns
+.Nd dynamicaly update an A record using Gandi's LiveDNS service.
+.Sh SYNOPSIS
+.Nm
+.Op Fl h
+.Op Fl x
+.Op Fl i Ar ipv4_lookup_url
+.Op Fl p Ar ipv4_lookup_json_property
+.Op Fl t Ar ttl
+.Op Fl v Ar verbosity
+.Op Fl s Ar subdomain
+.Op Fl d Ar domain
+.Sh DESCRIPTION
+.Nm
+retrieves your public IPv4 address from
+.Ar ipv4_lookup_url
+and looks for the IPv4 address in
+.Ar ipv4_lookup_json_property
+of the JSON response body. It then uses LiveDNS to check the A record for
+.Ar subdomain
+within the provided
+.Ar domain
+and creates or updates the A record if needed.
+.Pp
+The options are:
+.Bl -tag -width Ds
+.It Fl h
+Print help and usage information.
+.It Fl x
+Perform a dry-run. Only make safe GET requests and don't update anything.
+.It Fl i Ar ipv4_lookup_url
+An external service that will return your public IPv4 address. The default
+value is to use https://ifconfig.co/json, which is both free and open source.
+You can use any URL that returns a JSON body and has a top-level property with the IPv4 Address.
+.It Fl p Ar ipv4_lookup_json_property
+If you set a custom 
+.Ar ipv4_lookup_url
+you can change what propery of the JSON response has the IPv4 address. For example,
+if you have a customer service that returns {"address": "127.0.0.1"} you can set
+.Ar ipv4_lookup_json_property
+to "address".
+.It Fl t Ar ttl
+The value in seconds for the Time To Live of the A record. Note that LiveDNS
+allows a maximum value of 2592000 and a minimum value of 300. 
+.Nm
+will cap any
+.Ar ttl
+to those limits.
+.It Fl v Ar verbosity
+A value from 0 to 7 of what to log to stderr. See
+VERBOSITY LEVELS for details.
+.El
+.Sh VERBOSE LOGGING
+When specifying a verbosity level with 
+.Fl v
+logs are written to stderr in the following format
+.Bd -literal
+SEVERITY,FILE:LINE,MESSAGE
+.Ed
+.Sh ENVIRONMENT VARIABLES
+The following environment values are honored.
+.Bl -tag -width Ds
+.It GANDI_DNS_API_KEY 
+LiveDNS API Key (REQUIRED).
+.It GANDI_DNS_DOMAIN
+Default value for
+.Fl d
+if not provided as a command line option.
+.It GANDI_DNS_SUBDOMAIN
+Default value for
+.Fl s
+if not provided as a command line option.
+.Ed
+.Sh VERBOSITY LEVELS
+The following values can be set for the
+.Fl v
+option.
+.Bl -tag -width Ds
+.It LEVEL
+SEVERITY
+.It 0
+EMERG
+.It 1
+ALERT
+.It 2
+CRIT
+.It 3
+ERR
+.It 4
+WARN
+.It 5
+NOTICE
+.It 6
+INFO
+.It 7
+DEBUG
+.Sh EXAMPLES
+Create an A record for www.foo.com:
+.Bd -literal
+dldns -s www -d foo.com
+.Ed
+.Pp
+Create an A record for foo.bar.com with a TTL of 600
+and with debug messages written to stderr:
+.Bd -literal
+dldns -s foo -d bar.com -t 600 -v 7
+.Ed
+.Sh EXIT STATUS
+.Ex -std
+
