@@ -35,16 +35,18 @@
 #include "req.h"
 
 static size_t
-write_mem_callback(void * contents, size_t size, size_t nmemb,
-	void *userp)
+write_mem_callback(void * contents, size_t size, size_t nmemb, void *userp)
 {
-	size_t realsize = size * nmemb;
-	req_mem *mem = (req_mem *)userp;
+	size_t realsize;
+	req_mem * mem;
+	char * ptr;
 
-	char *ptr = realloc(mem->memory, mem->size + realsize + 1);
-	if(ptr == NULL) {
-		/* out of memory! */ 
-		printf("not enough memory (realloc returned NULL)\n");
+	realsize = size * nmemb;
+	mem = (req_mem *)userp;
+	ptr = realloc(mem->memory, mem->size + realsize + 1);
+
+	if (ptr == NULL) {
+		fprintf(stderr, "not enough memory (realloc returned NULL)\n");
 		return 0;
 	}
 
@@ -59,36 +61,43 @@ write_mem_callback(void * contents, size_t size, size_t nmemb,
 static size_t
 read_mem_callback(void * dest, size_t size, size_t nmemb, void *userp)
 {
-	req_mem *wt = (req_mem *)userp;
-	size_t buffer_size = size*nmemb;
+	req_mem * mem;
+	size_t buffer_size;
+	size_t copy_this_much;
 
-	if(wt->size) {
-		/* copy as much as possible from the source to the destination */ 
-		size_t copy_this_much = wt->size;
-		if(copy_this_much > buffer_size)
-		copy_this_much = buffer_size;
-		memcpy(dest, wt->memory, copy_this_much);
+	mem = (req_mem *)userp;
+	buffer_size = size * nmemb;
 
-		wt->memory += copy_this_much;
-		wt->size -= copy_this_much;
-		return copy_this_much; /* we copied this many bytes */ 
+	if (mem->size) {
+		copy_this_much = mem->size;
+
+		if (copy_this_much > buffer_size) {
+			copy_this_much = buffer_size;
+		}
+		memcpy(dest, mem->memory, copy_this_much);
+
+		mem->memory += copy_this_much;
+		mem->size -= copy_this_much;
+		return copy_this_much; 
 	}
 
-	return 0; /* no more data left to deliver */ 
+	return 0;
 }
 
 cJSON *
 req_put_or_post(CURLoption method, const char * url, cJSON * body,
 	req_options * options, long * status)
 {
-	CURL *curl_handle;
+	CURL * curl_handle;
 	CURLcode res;
-	struct curl_slist *list = NULL;
+	struct curl_slist * list;
 	req_mem chunk;
 	req_mem read_chunk;
+
 	cJSON *root;
 	root = NULL;
 	char * data;
+	list = NULL;
 
 	data = cJSON_PrintUnformatted(body);
 
@@ -152,8 +161,10 @@ req_get(const char * url, req_options * options, long * status)
 {
 	CURL *curl_handle;
 	CURLcode res;
-	struct curl_slist *list = NULL;
+	struct curl_slist * list;
 	req_mem chunk;
+
+	list = NULL;
 	cJSON *root;
 	root = NULL;
 

@@ -32,11 +32,11 @@
 #include "cJSON.h"
 
 typedef struct {
-	const char **headers;
+	const char ** headers;
 } req_options;
 
 typedef struct {
-  char *memory;
+  char * memory;
   size_t size;
 } req_mem;
 
