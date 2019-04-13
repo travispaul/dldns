@@ -50,7 +50,7 @@ Nothing to do.
 
 | Environment Variable Name | Example                   | Description                                | Required |
 |---------------------------|---------------------------|--------------------------------------------|----------|
-| GANDI_DNS_API_KEY         | kfuXhrA575aaxQKz9QRKbkJb7 | LiveDNS API Key                            | Yes      |
+| GANDI_DNS_API_KEY         | kfuXhrA575aaxQKz9QRKbkJb7 | LiveDNS API Key                            | **Yes**  |
 | GANDI_DNS_DOMAIN          | foo.com                   | Domain to update                           | No       |
 | GANDI_DNS_SUBDOMAIN       | www                       | Subdomain to update or create the A record | No       |
 
@@ -71,7 +71,15 @@ Currently you will need libcurl and BSD Make installed. A GNU Makefile (or CMake
 might be added in the near future. The [Makefile](Makefile) is very simply and should be
 easy enough to change for your platform.
 
-### MacOS
+### 😈 NetBSD
+Assumes you have curl installed from [pkgsrc](https://www.pkgsrc.org/).
+The ``PREFIX`` defaults to ``/usr/pkg``.
+
+```
+make
+```
+
+### 🍎 MacOS
 Assuming you have [pkgsrc installed](https://pkgsrc.joyent.com/install-on-osx/).
 
 ```
@@ -82,12 +90,4 @@ You can also link against the base libcurl if you don't have pkgsrc installed.
 
 ```
 bmake PREFIX=/usr
-```
-
-### NetBSD
-Assumes you have curl installed from [pkgsrc](https://www.pkgsrc.org/).
-The ``PREFIX`` defaults to ``/usr/pkg``.
-
-```
-make
 ```
