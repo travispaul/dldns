@@ -1,4 +1,4 @@
-# Dynamic LiveDNS 
+# dldns - Dynamic LiveDNS
 
 This program will retrieve your public IPv4 address from an
 [ifconfig.co](https://ifconfig.co/) compatible service and update or
@@ -21,20 +21,26 @@ dldns [-xh] [-i ipv4 lookup] [-p json prop] [-t ttl] [-v verbosity] -s subdomain
 
 ## Basic example
 
-Create an A record for www.foo.com and set it to your IPv4 address as reported by [ipconfig.co](https://ifconfig.co/):
+Create an A record for www.foo.com and set it to your IPv4 address as reported by [ipconfig.co](https://ifconfig.co/).
+
+Using ``-x`` you can see what actions will be taken, but no changes will be made:
 
 ```
-# Using -x you can see what actions will be taken, but no changes will be made:
-
 $ dldns -s www -d foo.com -x
 A new 'A' record will be created for 'www' with an IPv4 address of 'x.x.x.x'.
 Not proceeding with operation as the dry_run option was set with -x.
+```
 
-# You can then apply them without -x
+You can then apply them without ``-x``:
+
+```
 $ dldns -s www -d foo.com
 An 'A' record for 'www' was created with the public IPv4 address of 'x.x.x.x'.
+```
 
-# If the A record already has the correct IPv4 address, no changes will be made.
+If the A record already has the correct IPv4 address, no changes will be made:
+
+```
 $ dldns -s www -d foo.com
 The 'A' record for 'www' is already set to the current public IPv4 address of 'x.x.x.x'.
 Nothing to do.
@@ -72,8 +78,15 @@ Assuming you have [pkgsrc installed](https://pkgsrc.joyent.com/install-on-osx/).
 bmake PREFIX=/opt/pkg
 ```
 
+You can also link against the base libcurl if you don't have pkgsrc installed.
+
+```
+bmake PREFIX=/usr
+```
+
 ### NetBSD
 Assumes you have curl installed from [pkgsrc](https://www.pkgsrc.org/).
+The ``PREFIX`` defaults to ``/usr/pkg``.
 
 ```
 make
