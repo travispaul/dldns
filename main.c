@@ -424,7 +424,7 @@ main(int argc, char * argv[])
 			cJSON_AddNumberToObject(new_obj, "rrset_ttl", ttl);
 
 			logmsg(DEBUG, "JSON to be used for record creation=",
-					cJSON_Print(new_obj), __FILE__, __LINE__);
+					cJSON_PrintUnformatted(new_obj), __FILE__, __LINE__);
 
 			root = req_post(url, new_obj, options, &last_status);
 
