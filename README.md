@@ -23,7 +23,7 @@ dldns [-xh] [-i ipv4 lookup] [-p json prop] [-t ttl] [-v verbosity] -s subdomain
 
 Create an A record for www.foo.com and set it to your IPv4 address as reported by [ipconfig.co](https://ifconfig.co/).
 
-Using ``-x`` you can see what actions will be taken, but no changes will be made:
+Using the ``-x`` option you can see what actions will be taken, but no changes will be made:
 
 ```
 $ dldns -s www -d foo.com -x
@@ -31,7 +31,7 @@ A new 'A' record will be created for 'www' with an IPv4 address of 'x.x.x.x'.
 Not proceeding with operation as the dry_run option was set with -x.
 ```
 
-You can then apply them without ``-x``:
+You can then apply the change by omitting the ``-x`` option:
 
 ```
 $ dldns -s www -d foo.com
