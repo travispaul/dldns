@@ -24,7 +24,20 @@ dldns [-xh] [-i ipv4 lookup] [-p json prop] [-t ttl] [-v verbosity] -s subdomain
 Create an A record for www.foo.com and set it to your IPv4 address as reported by [ipconfig.co](https://ifconfig.co/):
 
 ```
-dldns -s www -d foo.com
+# Using -x you can see what actions will be taken, but no changes will be made:
+
+$ dldns -s www -d foo.com -x
+A new 'A' record will be created for 'www' with an IPv4 address of 'x.x.x.x'.
+Not proceeding with operation as the dry_run option was set with -x.
+
+# You can then apply them without -x
+$ dldns -s www -d foo.com
+An 'A' record for 'www' was created with the public IPv4 address of 'x.x.x.x'.
+
+# If the A record already has the correct IPv4 address, no changes will be made.
+$ dldns -s www -d foo.com
+The 'A' record for 'www' is already set to the current public IPv4 address of 'x.x.x.x'.
+Nothing to do.
 ```
 
 ## Environment Variables
@@ -49,7 +62,8 @@ See the man page or the examples below for more details:
 ## Building
 
 Currently you will need libcurl and BSD Make installed. A GNU Makefile (or CMakeLists.txt)
-might be added in the near future.
+might be added in the near future. The [Makefile](Makefile) is very simply and should be
+easy enough to change for your platform.
 
 ### MacOS
 Assuming you have [pkgsrc installed](https://pkgsrc.joyent.com/install-on-osx/).

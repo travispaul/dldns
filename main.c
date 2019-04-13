@@ -346,7 +346,7 @@ main(int argc, char * argv[])
 			logmsg(INFO, "Record is in the desired state, nothing to do",
 				NULL, __FILE__, __LINE__);
 			printf("The 'A' record for '%s' is already set to the current "
-				"public IPv4 address of %s. Nothing to do.\n",
+				"public IPv4 address of '%s'.\nNothing to do.\n",
 				subdomain, current_ipv4);
 		break;
 
@@ -354,9 +354,12 @@ main(int argc, char * argv[])
 			logmsg(INFO, "'A' record needs to be updated=",
 				subdomain, __FILE__, __LINE__);
 			if (dry_run) {
-				logmsg(INFO, "Not proceeding with operation as "
-					"dry_run was set with -x",
-					NULL, __FILE__, __LINE__);
+				logmsg(INFO, "Not proceeding with operation as dry_run was set "
+					"with -x", NULL, __FILE__, __LINE__);
+				printf("The 'A' record for '%s' will be updated with an IPv4 "
+					"address of '%s'.\nNot proceeding with operation as the "
+					"dry_run option was set with -x.\n", subdomain,
+					current_ipv4);
 				exit(0);
 			}
 
@@ -368,8 +371,8 @@ main(int argc, char * argv[])
 			cJSON_AddNumberToObject(new_obj, "rrset_ttl", ttl);
 
 			snprintf(url, sizeof url,
-				"https://dns.api.gandi.net/api/v5/domains/%s"
-				"/records/%s/A", domain, subdomain);
+				"https://dns.api.gandi.net/api/v5/domains/%s/records/%s/A",
+				domain, subdomain);
 
 			root = req_put(url, new_obj, options, &last_status);
 
@@ -388,13 +391,13 @@ main(int argc, char * argv[])
 				logmsg(NOTICE, "new 'A' record update for ",
 					subdomain, __FILE__, __LINE__);
 				printf("The 'A' record for '%s' was updated to the public IPv4 "
-					"address of %s.\n", subdomain, current_ipv4);
+					"address of '%s'.\n", subdomain, current_ipv4);
 			} else {
 				logmsg(CRIT, "'A' record not update for ",
 					subdomain, __FILE__, __LINE__);
 				printf("The 'A' record for '%s' was NOT updated to the public "
-					"IPv4 address of %s. Set increased verbosity to see details"
-					" and try again.\n", subdomain, current_ipv4);
+					"IPv4 address of '%s'. Set increased verbosity to see "
+					"details and try again.\n", subdomain, current_ipv4);
 			}
 
 			cJSON_free(new_array);
@@ -406,9 +409,12 @@ main(int argc, char * argv[])
 				__FILE__, __LINE__);
 
 			if (dry_run) {
-				logmsg(INFO, "Not proceeding with operation as "
-					"dry_run was set with -x",
-					NULL, __FILE__, __LINE__);
+				logmsg(INFO, "Not proceeding with operation as dry_run was set "
+					"with -x", NULL, __FILE__, __LINE__);
+				printf("A new 'A' record will be created for '%s' with an IPv4 "
+					"address of '%s'.\nNot proceeding with operation as the "
+					"dry_run option was set with -x.\n",
+					subdomain, current_ipv4);
 				exit(0);
 			}
 
@@ -442,12 +448,12 @@ main(int argc, char * argv[])
 				logmsg(NOTICE, "new 'A' record created for ", subdomain,
 					__FILE__, __LINE__);
 				printf("An 'A' record for '%s' was created with the public IPv4"
-					" address of %s.\n", subdomain, current_ipv4);
+					" address of '%s'.\n", subdomain, current_ipv4);
 			} else {
 				logmsg(CRIT, "'A' record not created for ",
 					subdomain, __FILE__, __LINE__);
 				printf("An 'A' record for '%s' was NOT created with the public "
-					"IPv4 address of %s. Set increased verbosity to see more "
+					"IPv4 address of '%s'. Set increased verbosity to see more "
 					"details and try again.\n\n", subdomain, current_ipv4);
 			}
 
