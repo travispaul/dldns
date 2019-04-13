@@ -45,3 +45,22 @@ See the man page or the examples below for more details:
 
 - [cJSON](https://github.com/DaveGamble/cJSON)
 - [libcurl](https://curl.haxx.se/libcurl/)
+
+## Building
+
+Currently you will need libcurl and BSD Make installed. A GNU Makefile (or CMakeLists.txt)
+might be added in the near future.
+
+### MacOS
+Assuming you have [pkgsrc installed](https://pkgsrc.joyent.com/install-on-osx/).
+
+```
+bmake PREFIX=/opt/pkg
+```
+
+### NetBSD
+Assumes you have curl installed from [pkgsrc](https://www.pkgsrc.org/).
+
+```
+make
+```
