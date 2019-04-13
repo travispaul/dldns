@@ -177,20 +177,18 @@ main(int argc, char * argv[])
 
 	api_key = getenv("GANDI_DNS_API_KEY");
 	if (api_key == NULL) {
-		logmsg(EMERG, "FATAL: ", "Unable to find a value for "
-			"the Gandi LiveDNS API Key in the 'GANDI_DNS_API_KEY' "
-			"environment variable."
-			, __FILE__, __LINE__);
+		logmsg(EMERG, "FATAL: ", "Unable to find a value for the Gandi LiveDNS "
+			"API Key in the 'GANDI_DNS_API_KEY' environment variable.",
+			__FILE__, __LINE__);
 		exit(1);
 	}
 
 	if (domain == NULL) {
 		domain = getenv("GANDI_DNS_DOMAIN");
 		if (domain == NULL || strlen(domain) < 3) {
-			logmsg(EMERG, "FATAL: ", "Unable to find a value for "
-				"'domain' in either the -d argument or the "
-				"'GANDI_DNS_DOMAIN' environment variable."
-				, __FILE__, __LINE__);
+			logmsg(EMERG, "FATAL: ", "Unable to find a value for 'domain' in "
+				"either the -d argument or the 'GANDI_DNS_DOMAIN' environment "
+				"variable." , __FILE__, __LINE__);
 			exit(1);
 		}
 	}
@@ -200,10 +198,9 @@ main(int argc, char * argv[])
 	if (subdomain == NULL) {
 		subdomain = getenv("GANDI_DNS_SUBDOMAIN");
 		if (subdomain == NULL || strlen(subdomain) < 1) {
-			logmsg(EMERG, "FATAL: ", "Unable to find a value for "
-				"'subdomain' in either the -s argument or the "
-				"'GANDI_DNS_SUBDOMAIN' environment variable."
-				, __FILE__, __LINE__);
+			logmsg(EMERG, "FATAL: ", "Unable to find a value for 'subdomain' "
+				"in either the -s argument or the 'GANDI_DNS_SUBDOMAIN' "
+				"environment variable.", __FILE__, __LINE__);
 			exit(1);
 		}
 	}
@@ -214,8 +211,7 @@ main(int argc, char * argv[])
 		ipv4_lookup_url = IPV4_LOOKUP_URL_DEFAULT;
 	}
 
-	logmsg(INFO, "ipv4_lookup_url=", ipv4_lookup_url,
-		__FILE__, __LINE__);
+	logmsg(INFO, "ipv4_lookup_url=", ipv4_lookup_url, __FILE__, __LINE__);
 
 	if (ipv4_lookup_property == NULL) {
 		ipv4_lookup_property = IPV4_LOOKUP_PROPERTY_DEFAULT;
@@ -229,16 +225,14 @@ main(int argc, char * argv[])
 	if (ttl > LIVEDNS_MAX_TTL) {
 		ttl = LIVEDNS_MAX_TTL;
 		snprintf(ttl_buffer, TTL_CHAR_BUFSIZE, "%d", ttl);
-		logmsg(ERR,
-			"Desired ttl exceeded LIVEDNS_MAX_TTL, capped to ",
+		logmsg(ERR, "Desired ttl exceeded LIVEDNS_MAX_TTL, capped to ",
 			ttl_buffer, __FILE__, __LINE__);
 	}
 
 	if (ttl < LIVEDNS_MIN_TTL) {
 		ttl = LIVEDNS_MIN_TTL;
 		snprintf(ttl_buffer, TTL_CHAR_BUFSIZE, "%d", ttl);
-		logmsg(ERR,
-			"Desired ttl lower than LIVEDNS_MIN_TTL, increased to ",
+		logmsg(ERR, "Desired ttl lower than LIVEDNS_MIN_TTL, increased to ",
 			ttl_buffer, __FILE__, __LINE__);
 	}
 
@@ -247,13 +241,13 @@ main(int argc, char * argv[])
 
 	root = req_get(ipv4_lookup_url, NULL, &last_status);
 
-	fail_hard_if_null(root, "failed to fetch IPv4 address, no "
-		"parsable JSON response returned", __FILE__, __LINE__);
+	fail_hard_if_null(root, "failed to fetch IPv4 address, no parsable JSON "
+		"response returned", __FILE__, __LINE__);
 
 	snprintf(last_status_buffer, 4, "%ld", last_status);
 
-	logmsg(DEBUG, "HTTP status from ipv4_lookup_url=",
-		last_status_buffer, __FILE__, __LINE__);
+	logmsg(DEBUG, "HTTP status from ipv4_lookup_url=", last_status_buffer,
+		__FILE__, __LINE__);
 
 	logmsg(DEBUG, "response from ipv4_lookup_url=",
 		cJSON_PrintUnformatted(root), __FILE__, __LINE__);
@@ -269,8 +263,7 @@ main(int argc, char * argv[])
 		snprintf(current_ipv4, sizeof current_ipv4, "%s",
 			cJSON_GetStringValue(ip));
 		cJSON_free(ip);
-		logmsg(NOTICE, "current_ipv4=", current_ipv4,
-			__FILE__, __LINE__);
+		logmsg(NOTICE, "current_ipv4=", current_ipv4, __FILE__, __LINE__);
 	}
 
 	cJSON_free(root);
@@ -293,9 +286,8 @@ main(int argc, char * argv[])
 
 	root = req_get(url, options, &last_status);
 
-	fail_hard_if_null(root, "failed to fetch DNS records, no "
-		"parsable JSON response returned from LiveDNS", __FILE__,
-		__LINE__);
+	fail_hard_if_null(root, "failed to fetch DNS records, no parsable JSON "
+		"response returned from LiveDNS", __FILE__, __LINE__);
 
 	snprintf(last_status_buffer, 4, "%ld", last_status);
 
@@ -351,9 +343,11 @@ main(int argc, char * argv[])
 
 	switch (update_mode) {
 		case ACCURATE:
-			logmsg(INFO, "Record is in the desired state, "
-				"nothing to do",
+			logmsg(INFO, "Record is in the desired state, nothing to do",
 				NULL, __FILE__, __LINE__);
+			printf("The 'A' record for '%s' is already set to the current "
+				"public IPv4 address of %s. Nothing to do.\n",
+				subdomain, current_ipv4);
 		break;
 
 		case UPDATE:
@@ -379,14 +373,13 @@ main(int argc, char * argv[])
 
 			root = req_put(url, new_obj, options, &last_status);
 
-			fail_hard_if_null(root, "failed to update DNS record, no "
-				"parsable JSON response returned from LiveDNS",
-				__FILE__, __LINE__);
+			fail_hard_if_null(root, "failed to update DNS record, no parsable "
+				" JSON response returned from LiveDNS", __FILE__, __LINE__);
 
 			snprintf(last_status_buffer, 4, "%ld", last_status);
 
-			logmsg(DEBUG, "HTTP status from LiveDNS PUT=",
-				last_status_buffer, __FILE__, __LINE__);
+			logmsg(DEBUG, "HTTP status from LiveDNS PUT=", last_status_buffer,
+				__FILE__, __LINE__);
 
 			logmsg(DEBUG, "response from LiveDNS PUT=",
 				cJSON_PrintUnformatted(root), __FILE__, __LINE__);
@@ -394,9 +387,14 @@ main(int argc, char * argv[])
 			if (last_status >= 200 && last_status <= 299) {
 				logmsg(NOTICE, "new 'A' record update for ",
 					subdomain, __FILE__, __LINE__);
+				printf("The 'A' record for '%s' was updated to the public IPv4 "
+					"address of %s.\n", subdomain, current_ipv4);
 			} else {
 				logmsg(CRIT, "'A' record not update for ",
 					subdomain, __FILE__, __LINE__);
+				printf("The 'A' record for '%s' was NOT updated to the public "
+					"IPv4 address of %s. Set increased verbosity to see details"
+					" and try again.\n", subdomain, current_ipv4);
 			}
 
 			cJSON_free(new_array);
@@ -404,8 +402,8 @@ main(int argc, char * argv[])
 		break;
 
 		case CREATE:
-			logmsg(INFO, "'A' record needs to be created=",
-				subdomain, __FILE__, __LINE__);
+			logmsg(INFO, "'A' record needs to be created=", subdomain,
+				__FILE__, __LINE__);
 
 			if (dry_run) {
 				logmsg(INFO, "Not proceeding with operation as "
@@ -441,11 +439,16 @@ main(int argc, char * argv[])
 				cJSON_PrintUnformatted(root), __FILE__, __LINE__);
 
 			if (last_status >= 200 && last_status <= 299) {
-				logmsg(NOTICE, "new 'A' record created for ",
-					subdomain, __FILE__, __LINE__);
+				logmsg(NOTICE, "new 'A' record created for ", subdomain,
+					__FILE__, __LINE__);
+				printf("An 'A' record for '%s' was created with the public IPv4"
+					" address of %s.\n", subdomain, current_ipv4);
 			} else {
 				logmsg(CRIT, "'A' record not created for ",
 					subdomain, __FILE__, __LINE__);
+				printf("An 'A' record for '%s' was NOT created with the public "
+					"IPv4 address of %s. Set increased verbosity to see more "
+					"details and try again.\n\n", subdomain, current_ipv4);
 			}
 
 			cJSON_free(new_array);
@@ -498,9 +501,8 @@ logmsg(int level, const char * msg, const char * value,
 static void
 usage()
 {
-	fprintf(stderr,
-		"Usage:\n  dldns [-xh] [-i ipv4 lookup] [-p json prop]"
-		" [-t ttl] [-v verbosity] -s subdomain -d domain\n");
+	fprintf(stderr, "Usage:\n  dldns [-xh] [-i ipv4 lookup] [-p json prop] "
+	"[-t ttl] [-v verbosity] -s subdomain -d domain\n");
 	exit(1);
 }
 
