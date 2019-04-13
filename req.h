@@ -35,7 +35,10 @@ typedef struct {
 	const char **headers;
 } req_options;
 
-typedef void (*req_json_callback)(cJSON *);
+typedef struct {
+  char *memory;
+  size_t size;
+} req_mem;
 
 cJSON *
 req_get(const char *, req_options *, long *);

@@ -34,17 +34,12 @@
 
 #include "req.h"
 
-struct mem_struct {
-	char *memory;
-	size_t size;
-};
-
 static size_t
 write_mem_callback(void * contents, size_t size, size_t nmemb,
 	void *userp)
 {
 	size_t realsize = size * nmemb;
-	struct mem_struct *mem = (struct mem_struct *)userp;
+	req_mem *mem = (req_mem *)userp;
 
 	char *ptr = realloc(mem->memory, mem->size + realsize + 1);
 	if(ptr == NULL) {
@@ -64,7 +59,7 @@ write_mem_callback(void * contents, size_t size, size_t nmemb,
 static size_t
 read_mem_callback(void * dest, size_t size, size_t nmemb, void *userp)
 {
-	struct mem_struct *wt = (struct mem_struct *)userp;
+	req_mem *wt = (req_mem *)userp;
 	size_t buffer_size = size*nmemb;
 
 	if(wt->size) {
@@ -89,8 +84,8 @@ req_put_or_post(CURLoption method, const char * url, cJSON * body,
 	CURL *curl_handle;
 	CURLcode res;
 	struct curl_slist *list = NULL;
-	struct mem_struct chunk;
-	struct mem_struct read_chunk;
+	req_mem chunk;
+	req_mem read_chunk;
 	cJSON *root;
 	root = NULL;
 	char * data;
@@ -158,7 +153,7 @@ req_get(const char * url, req_options * options, long * status)
 	CURL *curl_handle;
 	CURLcode res;
 	struct curl_slist *list = NULL;
-	struct mem_struct chunk;
+	req_mem chunk;
 	cJSON *root;
 	root = NULL;
 
