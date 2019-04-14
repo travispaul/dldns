@@ -432,9 +432,8 @@ main(int argc, char * argv[])
 
 			root = req_post(url, new_obj, options, &last_status);
 
-			fail_hard_if_null(root, "failed to create DNS record, no "
-				"parsable JSON response returned from LiveDNS",
-				__FILE__, __LINE__);
+			fail_hard_if_null(root, "failed to create DNS record, no parsable "
+				"JSON response returned from LiveDNS", __FILE__, __LINE__);
 
 			snprintf(last_status_buffer, 4, "%ld", last_status);
 
@@ -465,8 +464,8 @@ main(int argc, char * argv[])
 }
 
 static void
-logmsg(int level, const char * msg, const char * value,
-	const char * file, unsigned int line)
+logmsg(int level, const char * msg, const char * value, const char * file,
+	unsigned int line)
 {
 	char * severity;
 	if (level <= verbosity) {
@@ -499,8 +498,7 @@ logmsg(int level, const char * msg, const char * value,
 		if (value == NULL) {
 			value = "";
 		}
-		fprintf(stderr, "%s,%s:%d,%s%s\n",
-			severity, file, line, msg, value);
+		fprintf(stderr, "%s,%s:%d,%s%s\n", severity, file, line, msg, value);
 	}
 }
 
