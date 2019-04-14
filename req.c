@@ -93,12 +93,12 @@ req_put_or_post(CURLoption method, const char * url, cJSON * body,
 	struct curl_slist * list;
 	req_mem chunk;
 	req_mem read_chunk;
-
-	cJSON *root;
-	root = NULL;
 	char * data;
-	list = NULL;
+	cJSON *root;
 
+	root = NULL;
+	list = NULL;
+ 	
 	data = cJSON_PrintUnformatted(body);
 
 	chunk.memory = malloc(1);
@@ -137,11 +137,11 @@ req_put_or_post(CURLoption method, const char * url, cJSON * body,
 
 	res = curl_easy_perform(curl_handle);
 
-	if(res != CURLE_OK) {
+	if (res != CURLE_OK) {
 		fprintf(stderr, "curl_easy_perform() failed: %s\n",
 		curl_easy_strerror(res));
-	}
-	else {
+	} else {
+		curl_easy_getinfo(curl_handle, CURLINFO_RESPONSE_CODE, status);
 		root = cJSON_Parse(chunk.memory);
 	}
 
@@ -163,9 +163,9 @@ req_get(const char * url, req_options * options, long * status)
 	CURLcode res;
 	struct curl_slist * list;
 	req_mem chunk;
+	cJSON *root;
 
 	list = NULL;
-	cJSON *root;
 	root = NULL;
 
 	chunk.memory = malloc(1);

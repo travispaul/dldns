@@ -30,6 +30,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <getopt.h>
+
+#ifdef __linux__
+#include <bsd/string.h>
+#endif
 
 #include "cJSON.h"
 #include "req.h"
@@ -55,7 +60,7 @@
 #define IPV4_LOOKUP_PROPERTY_DEFAULT "ip"
 
 static void
-usage(void) __dead;
+usage(void);
 
 static void
 fail_hard_if_null(void *, const char *, const char *, unsigned int);
@@ -76,7 +81,7 @@ main(int argc, char * argv[])
 	req_options * options;
 	const char * headers[2];
 	const char * new_ip_array[1];
-	char url[2048]; // XXX use malloc
+	char url[2048]; /* XXX use malloc */
 	char api_key_header[256];
 	char current_ipv4[16];
 
@@ -86,7 +91,7 @@ main(int argc, char * argv[])
 	char * ipv4_lookup_url;
 	char * ipv4_lookup_property;
 
-	cJSON * root, * item, * ip, * new_obj, * new_array;
+	cJSON * root, * item, * type, * name, * values, * ip, * new_obj, * new_array;
 
 	int ttl = LIVEDNS_MIN_TTL;
 	char ttl_buffer[TTL_CHAR_BUFSIZE + 1];
@@ -268,14 +273,14 @@ main(int argc, char * argv[])
 
 	cJSON_free(root);
 
-	// XXX Use malloc here
+	/* XXX Use malloc here */
 	snprintf(url, sizeof url,
 		"https://dns.api.gandi.net/api/v5/domains/%s/records",
 		domain);
 
 	logmsg(DEBUG, "url=", url, __FILE__, __LINE__);
 
-	// XXX Use malloc here
+	/* XXX Use malloc here */
 	snprintf(api_key_header, sizeof api_key_header,
 		"X-Api-Key: %s", api_key);
 
@@ -301,7 +306,7 @@ main(int argc, char * argv[])
 		logmsg(EMERG, "received an error response from LiveDNS GET=",
 			last_status_buffer, __FILE__, __LINE__);
 
-		cJSON *item = cJSON_GetObjectItem(root, "message");
+		item = cJSON_GetObjectItem(root, "message");
 
 		fail_hard_if_null(item, "No error message provided",
 			__FILE__, __LINE__);
@@ -313,9 +318,9 @@ main(int argc, char * argv[])
 	}
 
 	cJSON_ArrayForEach(item, root) {
-		cJSON *type = cJSON_GetObjectItem(item, "rrset_type");
-		cJSON *name = cJSON_GetObjectItem(item, "rrset_name");
-		cJSON *values = cJSON_GetObjectItem(item, "rrset_values");
+		type = cJSON_GetObjectItem(item, "rrset_type");
+		name = cJSON_GetObjectItem(item, "rrset_name");
+		values = cJSON_GetObjectItem(item, "rrset_values");
 
 		if (strcmp(cJSON_GetStringValue(type), "A") == 0 &&
 			strcmp(cJSON_GetStringValue(name), subdomain) == 0) {
@@ -460,7 +465,7 @@ main(int argc, char * argv[])
 			cJSON_free(new_obj);
 		break;
 	}
-
+	return 0;
 }
 
 static void

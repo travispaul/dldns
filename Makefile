@@ -1,9 +1,9 @@
-PROG=			dldns
-SRCS=			main.c cJSON.c req.c
-OBJS=			*.o 
+PROG=		dldns
+SRCS=		dldns.c cJSON.c req.c
+OBJS=		*.o
 LDADD=		-lcurl
 PREFIX?=	/usr/pkg
-CFLAGS+=	-Wall -Werror -I${PREFIX}/include
+CFLAGS+=	-Wall -Werror -Wextra -Wpedantic -pedantic -I${PREFIX}/include
 LDFLAGS+=	-L${PREFIX}/lib
 
 .include <bsd.prog.mk>

@@ -13,13 +13,13 @@ Inspired by several other projects:
 - [lembregtse/gandi-dyndns](https://github.com/lembregtse/gandi-dyndns)
 
 
-## Usage Overview:
+## 👀 Usage Overview:
 
 ```
 dldns [-xh] [-i ipv4 lookup] [-p json prop] [-t ttl] [-v verbosity] -s subdomain -d domain
 ```
 
-## Basic example
+## 🔍 Basic example
 
 Create an A record for www.foo.com and set it to your IPv4 address as reported by [ipconfig.co](https://ifconfig.co/).
 
@@ -46,7 +46,7 @@ The 'A' record for 'www' is already set to the current public IPv4 address of 'x
 Nothing to do.
 ```
 
-## Environment Variables
+## 🏞 Environment Variables
 
 | Environment Variable Name | Example                   | Description                                | Required |
 |---------------------------|---------------------------|--------------------------------------------|----------|
@@ -60,16 +60,12 @@ By design you cannot set `GANDI_DNS_API_KEY` as a command line argument.
 See the man page or the examples below for more details:
 
 
-## Dependencies
+## 📦 Dependencies
 
-- [cJSON](https://github.com/DaveGamble/cJSON)
+- [cJSON](https://github.com/DaveGamble/cJSON) (included in repo)
 - [libcurl](https://curl.haxx.se/libcurl/)
 
-## Building
-
-Currently you will need libcurl and BSD Make installed. A GNU Makefile (or CMakeLists.txt)
-might be added in the near future. The [Makefile](Makefile) is very simply and should be
-easy enough to change for your platform.
+## ⚒ Building
 
 ### 😈 NetBSD
 Assumes you have curl installed from [pkgsrc](https://www.pkgsrc.org/).
@@ -80,14 +76,26 @@ make
 ```
 
 ### 🍎 MacOS
-Assuming you have [pkgsrc installed](https://pkgsrc.joyent.com/install-on-osx/).
+
+You can use BSD Make and libcurl from [pkgsrc](https://pkgsrc.joyent.com/install-on-osx/) or use GNU Make and the base libcurl.
+
+#### base libcurl
+
+```
+make
+```
+
+#### Pkgsrc libcurl
 
 ```
 bmake PREFIX=/opt/pkg
 ```
 
-You can also link against the base libcurl if you don't have pkgsrc installed.
+
+### 🐧 Linux
+
+Only tested against CentOS 7, you need to have libbsd-devel and libcurl-devel installed.
 
 ```
-bmake PREFIX=/usr
+make
 ```
