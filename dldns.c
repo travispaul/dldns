@@ -495,12 +495,12 @@ logmsg(int level, const char * msg, const char * value, const char * file,
 			case NOTICE:
 				severity = "NOTICE";
 				break;
-			case INFO:
-				severity = "INFO";
-				break;
 			case DEBUG:
 				severity = "DEBUG";
 				break;
+			case INFO:
+			default:
+				severity = "INFO";
 		}
 		if (value == NULL) {
 			value = "";
