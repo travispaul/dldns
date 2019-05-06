@@ -1,9 +1,8 @@
+.include "Makefile.inc"
+
 PROG=		dldns
-SRCS=		dldns.c cJSON.c req.c
+SRCS=		${PROG}.c req.c cJSON.c
 OBJS=		*.o
-LDADD=		-lcurl
-PREFIX?=	/usr/pkg
-CFLAGS+=	-Wall -Werror -Wextra -Wpedantic -pedantic -I${PREFIX}/include
-LDFLAGS+=	-L${PREFIX}/lib
+LDADD=	-lcurl
 
 .include <bsd.prog.mk>
