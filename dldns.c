@@ -59,8 +59,7 @@
 #define IPV4_LOOKUP_URL_DEFAULT "https://ifconfig.co/json"
 #define IPV4_LOOKUP_PROPERTY_DEFAULT "ip"
 
-static void
-usage(void);
+static void usage(void) __dead;
 
 static void
 fail_hard_if_null(void *, const char *, const char *, unsigned int);
@@ -108,6 +107,8 @@ main(int argc, char * argv[])
 	dry_run = 0;
 
 	verbosity = ERR;
+
+	setprogname(argv[0]);
 
 	while ((opt_char = getopt(argc, argv, "d:i:p:s:t:v:x")) != -1) {
 		switch (opt_char) {
@@ -174,6 +175,7 @@ main(int argc, char * argv[])
 			case 'h':
 			default:
 				usage();
+				/* NOTREACHED */
 		}
 	}
 
@@ -185,7 +187,7 @@ main(int argc, char * argv[])
 		logmsg(EMERG, "FATAL: ", "Unable to find a value for the Gandi LiveDNS "
 			"API Key in the 'GANDI_DNS_API_KEY' environment variable.",
 			__FILE__, __LINE__);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	if (domain == NULL) {
@@ -194,7 +196,7 @@ main(int argc, char * argv[])
 			logmsg(EMERG, "FATAL: ", "Unable to find a value for 'domain' in "
 				"either the -d argument or the 'GANDI_DNS_DOMAIN' environment "
 				"variable." , __FILE__, __LINE__);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 	}
 
@@ -206,7 +208,7 @@ main(int argc, char * argv[])
 			logmsg(EMERG, "FATAL: ", "Unable to find a value for 'subdomain' "
 				"in either the -s argument or the 'GANDI_DNS_SUBDOMAIN' "
 				"environment variable.", __FILE__, __LINE__);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 	}
 
@@ -260,7 +262,7 @@ main(int argc, char * argv[])
 	if (last_status >= 400) {
 		logmsg(EMERG, "received error response from ipv4_lookup_url=",
 			last_status_buffer, __FILE__, __LINE__);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	if (cJSON_HasObjectItem(root, ipv4_lookup_property)) {
@@ -314,7 +316,7 @@ main(int argc, char * argv[])
 		logmsg(EMERG, "error=", cJSON_GetStringValue(item),
 			__FILE__, __LINE__);
 
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	cJSON_ArrayForEach(item, root) {
@@ -365,7 +367,7 @@ main(int argc, char * argv[])
 					"address of '%s'.\nNot proceeding with operation as the "
 					"dry_run option was set with -x.\n", subdomain,
 					current_ipv4);
-				exit(0);
+				exit(EXIT_SUCCESS);
 			}
 
 			new_ip_array[0] = current_ipv4;
@@ -420,7 +422,7 @@ main(int argc, char * argv[])
 					"address of '%s'.\nNot proceeding with operation as the "
 					"dry_run option was set with -x.\n",
 					subdomain, current_ipv4);
-				exit(0);
+				exit(EXIT_SUCCESS);
 			}
 
 			new_ip_array[0] = current_ipv4;
@@ -508,11 +510,11 @@ logmsg(int level, const char * msg, const char * value, const char * file,
 }
 
 static void
-usage()
+usage(void)
 {
-	fprintf(stderr, "Usage:\n  dldns [-xh] [-i ipv4 lookup] [-p json prop] "
-	"[-t ttl] [-v verbosity] -s subdomain -d domain\n");
-	exit(1);
+	fprintf(stderr, "Usage:\n  %s [-xh] [-i ipv4 lookup] [-p json prop] "
+		"[-t ttl] [-v verbosity] -s subdomain -d domain\n", getprogname());
+	exit(EXIT_FAILURE);
 }
 
 static void
@@ -524,6 +526,6 @@ fail_hard_if_null(void * ptr, const char * msg, const char * file,
 			msg = "malloc failed";
 		}
 		logmsg(EMERG, msg, NULL, file, line);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 }
