@@ -26,8 +26,8 @@
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef _REQ_H
-#define _REQ_H
+#ifndef _REQ_H_
+#define _REQ_H_
 
 #include "cJSON.h"
 
@@ -49,5 +49,5 @@ req_put(const char *, cJSON *, req_options *, long *);
 cJSON *
 req_post(const char *, cJSON *, req_options *, long *);
 
-#endif /* !_REQ_H */
+#endif /* !_REQ_H_ */
 
