@@ -34,6 +34,7 @@
 
 #ifdef __linux__
 #include <bsd/string.h>
+#include <bsd/stdlib.h>
 #endif
 
 #include "cJSON.h"
@@ -59,7 +60,7 @@
 #define IPV4_LOOKUP_URL_DEFAULT "https://ifconfig.co/json"
 #define IPV4_LOOKUP_PROPERTY_DEFAULT "ip"
 
-static void usage(void) __dead;
+static void usage(void);
 
 static void
 fail_hard_if_null(void *, const char *, const char *, unsigned int);
