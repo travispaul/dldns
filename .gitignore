@@ -3,3 +3,4 @@ t_dldns
 *.o
 .gdbinit
 *.html1
+*.out
