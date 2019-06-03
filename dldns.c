@@ -96,6 +96,7 @@ main(int argc, char * argv[])
 	int ttl = LIVEDNS_MIN_TTL;
 	char ttl_buffer[TTL_CHAR_BUFSIZE + 1];
 	unsigned short dry_run;
+	unsigned short skip_GET;
 	unsigned short update_mode;
 	long last_status;
 	char last_status_buffer[4];
@@ -111,7 +112,7 @@ main(int argc, char * argv[])
 
 	setprogname(argv[0]);
 
-	while ((opt_char = getopt(argc, argv, "d:i:p:s:t:v:x")) != -1) {
+	while ((opt_char = getopt(argc, argv, "d:i:f:p:s:t:v:x")) != -1) {
 		switch (opt_char) {
 
 			/* domain */
@@ -130,6 +131,12 @@ main(int argc, char * argv[])
 					__FILE__, __LINE__);
 				strlcpy(ipv4_lookup_url, optarg,
 					optarg_length + 1);
+				break;
+
+			/* (force) Use the provided IPv4 address*/
+			case 'f':
+				snprintf(current_ipv4, sizeof current_ipv4, "%s", optarg);
+				skip_GET = 1;
 				break;
 
 			/* JSON property containing ipv4 address */
@@ -247,34 +254,35 @@ main(int argc, char * argv[])
 	snprintf(ttl_buffer, TTL_CHAR_BUFSIZE, "%d", ttl);
 	logmsg(INFO, "ttl=", ttl_buffer, __FILE__, __LINE__);
 
-	root = req_get(ipv4_lookup_url, NULL, &last_status);
+	if (!skip_GET) {
+		root = req_get(ipv4_lookup_url, NULL, &last_status);
 
-	fail_hard_if_null(root, "failed to fetch IPv4 address, no parsable JSON "
-		"response returned", __FILE__, __LINE__);
+		fail_hard_if_null(root, "failed to fetch IPv4 address, no parsable JSON"
+			" response returned", __FILE__, __LINE__);
 
-	snprintf(last_status_buffer, 4, "%ld", last_status);
+		snprintf(last_status_buffer, 4, "%ld", last_status);
 
-	logmsg(DEBUG, "HTTP status from ipv4_lookup_url=", last_status_buffer,
-		__FILE__, __LINE__);
+		logmsg(DEBUG, "HTTP status from ipv4_lookup_url=", last_status_buffer,
+			__FILE__, __LINE__);
 
-	logmsg(DEBUG, "response from ipv4_lookup_url=",
-		cJSON_PrintUnformatted(root), __FILE__, __LINE__);
+		logmsg(DEBUG, "response from ipv4_lookup_url=",
+			cJSON_PrintUnformatted(root), __FILE__, __LINE__);
 
-	if (last_status >= 400) {
-		logmsg(EMERG, "received error response from ipv4_lookup_url=",
-			last_status_buffer, __FILE__, __LINE__);
-		exit(EXIT_FAILURE);
+		if (last_status >= 400) {
+			logmsg(EMERG, "received error response from ipv4_lookup_url=",
+				last_status_buffer, __FILE__, __LINE__);
+			exit(EXIT_FAILURE);
+		}
+
+		if (cJSON_HasObjectItem(root, ipv4_lookup_property)) {
+			ip = cJSON_GetObjectItem(root, ipv4_lookup_property);
+			snprintf(current_ipv4, sizeof current_ipv4, "%s",
+				cJSON_GetStringValue(ip));
+			cJSON_free(ip);
+			logmsg(NOTICE, "current_ipv4=", current_ipv4, __FILE__, __LINE__);
+		}
+		cJSON_free(root);
 	}
-
-	if (cJSON_HasObjectItem(root, ipv4_lookup_property)) {
-		ip = cJSON_GetObjectItem(root, ipv4_lookup_property);
-		snprintf(current_ipv4, sizeof current_ipv4, "%s",
-			cJSON_GetStringValue(ip));
-		cJSON_free(ip);
-		logmsg(NOTICE, "current_ipv4=", current_ipv4, __FILE__, __LINE__);
-	}
-
-	cJSON_free(root);
 
 	/* XXX Use malloc here */
 	snprintf(url, sizeof url,

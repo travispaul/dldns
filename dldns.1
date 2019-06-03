@@ -9,6 +9,7 @@
 .Op Fl h
 .Op Fl x
 .Op Fl i Ar ipv4_lookup_url
+.Op Fl f Ar ipv4
 .Op Fl p Ar ipv4_lookup_json_property
 .Op Fl t Ar ttl
 .Op Fl v Ar verbosity
@@ -36,6 +37,8 @@ Perform a dry-run. Only make safe GET requests and don't update anything.
 An external service that will return your public IPv4 address. The default
 value is to use https://ifconfig.co/json, which is both free and open source.
 You can use any URL that returns a JSON body and has a top-level property with the IPv4 Address.
+.It Fl f Ar ipv4
+Force using the provided ipv4 address and don't use ipv4_lookup_url
 .It Fl p Ar ipv4_lookup_json_property
 If you set a custom 
 .Ar ipv4_lookup_url

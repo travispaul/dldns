@@ -16,7 +16,7 @@ Inspired by several other projects:
 ## 👀 Usage Overview:
 
 ```
-dldns [-xh] [-i ipv4 lookup] [-p json prop] [-t ttl] [-v verbosity] -s subdomain -d domain
+dldns [-xh] [-i ipv4 lookup] [-f ipv4] [-p json prop] [-t ttl] [-v verbosity] -s subdomain -d domain
 ```
 
 ## 🔍 Basic example
