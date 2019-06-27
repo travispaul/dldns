@@ -63,6 +63,7 @@ See the man page or the examples below for more details:
 ## 📦 Dependencies
 
 - [cJSON](https://github.com/DaveGamble/cJSON) (included in repo)
+- [log.c](https://github.com/rxi/log.c) (included in repo)
 - [libcurl](https://curl.haxx.se/libcurl/)
 
 ## ⚒ Building
