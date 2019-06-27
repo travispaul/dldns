@@ -39,6 +39,7 @@
 
 #include "cJSON.h"
 #include "req.h"
+#include "log.h"
 
 #define CREATE 0
 #define UPDATE 1
@@ -48,25 +49,17 @@
 #define LIVEDNS_MIN_TTL 300
 #define TTL_CHAR_BUFSIZE 8
 
-#define EMERG 0
-#define ALERT 1
-#define CRIT 2
-#define ERR 3
-#define WARN 4
-#define NOTICE 5
-#define INFO 6
-#define DEBUG 7
+#define TRACE 0
+#define DEBUG 1
+#define INFO 2
+#define WARN 3
+#define ERROR 4
+#define FATAL 5
 
 #define IPV4_LOOKUP_URL_DEFAULT "https://ifconfig.co/json"
 #define IPV4_LOOKUP_PROPERTY_DEFAULT "ip"
 
 static void usage(void);
-
-static void
-fail_hard_if_null(void *, const char *, const char *, unsigned int);
-
-static void
-logmsg(int, const char *, const char *, const char *, unsigned int);
 
 static int verbosity;
 
@@ -108,7 +101,9 @@ main(int argc, char * argv[])
 	update_mode = CREATE;
 	dry_run = 0;
 
-	verbosity = ERR;
+	verbosity = INFO;
+
+	log_set_level(verbosity);
 
 	setprogname(argv[0]);
 
@@ -119,7 +114,10 @@ main(int argc, char * argv[])
 			case 'd':
 				optarg_length = strlen(optarg);
 				domain = malloc(optarg_length + 1);
-				fail_hard_if_null(domain, NULL, __FILE__, __LINE__);
+				if (domain == NULL) {
+					log_fatal("malloc failed at %s:%d", __FILE__, __LINE__);
+					exit(EXIT_FAILURE);
+				}
 				strlcpy(domain, optarg, optarg_length + 1);
 				break;
 
@@ -127,10 +125,11 @@ main(int argc, char * argv[])
 			case 'i':
 				optarg_length = strlen(optarg);
 				ipv4_lookup_url = malloc(optarg_length + 1);
-				fail_hard_if_null(ipv4_lookup_url, NULL,
-					__FILE__, __LINE__);
-				strlcpy(ipv4_lookup_url, optarg,
-					optarg_length + 1);
+				if (ipv4_lookup_url == NULL) {
+					log_fatal("malloc failed at %s:%d", __FILE__, __LINE__);
+					exit(EXIT_FAILURE);
+				}
+				strlcpy(ipv4_lookup_url, optarg, optarg_length + 1);
 				break;
 
 			/* (force) Use the provided IPv4 address*/
@@ -143,18 +142,21 @@ main(int argc, char * argv[])
 			case 'p':
 				optarg_length = strlen(optarg);
 				ipv4_lookup_property = malloc(optarg_length + 1);
-				fail_hard_if_null(ipv4_lookup_property, NULL,
-					__FILE__, __LINE__);
-				strlcpy(ipv4_lookup_property, optarg,
-					optarg_length + 1);
+				if (ipv4_lookup_property == NULL) {
+					log_fatal("malloc failed at %s:%d", __FILE__, __LINE__);
+					exit(EXIT_FAILURE);
+				}
+				strlcpy(ipv4_lookup_property, optarg, optarg_length + 1);
 				break;
 
 			/* subdomain */
 			case 's':
 				optarg_length = strlen(optarg);
 				subdomain = malloc(optarg_length + 1);
-				fail_hard_if_null(subdomain, NULL,
-					__FILE__, __LINE__);
+				if (subdomain == NULL) {
+					log_fatal("malloc failed at %s:%d", __FILE__, __LINE__);
+					exit(EXIT_FAILURE);
+				}
 				strlcpy(subdomain, optarg, optarg_length + 1);
 				break;
 
@@ -166,12 +168,13 @@ main(int argc, char * argv[])
 			/* verbosity */
 			case 'v':
 				verbosity = atoi(optarg);
-				if (verbosity <= EMERG) {
-					verbosity = EMERG;
+				if (verbosity <= TRACE) {
+					verbosity = TRACE;
 				}
-				if (verbosity >= DEBUG) {
-					verbosity = DEBUG;
+				if (verbosity >= FATAL) {
+					verbosity = FATAL;
 				}
+				log_set_level(verbosity);
 				break;
 
 			/* dry run */
@@ -192,85 +195,83 @@ main(int argc, char * argv[])
 
 	api_key = getenv("GANDI_DNS_API_KEY");
 	if (api_key == NULL) {
-		logmsg(EMERG, "FATAL: ", "Unable to find a value for the Gandi LiveDNS "
-			"API Key in the 'GANDI_DNS_API_KEY' environment variable.",
-			__FILE__, __LINE__);
+		log_fatal("Unable to find a value for the Gandi LiveDNS API Key in "
+			"the 'GANDI_DNS_API_KEY' environment variable.");
 		exit(EXIT_FAILURE);
 	}
 
 	if (domain == NULL) {
 		domain = getenv("GANDI_DNS_DOMAIN");
 		if (domain == NULL || strlen(domain) < 3) {
-			logmsg(EMERG, "FATAL: ", "Unable to find a value for 'domain' in "
-				"either the -d argument or the 'GANDI_DNS_DOMAIN' environment "
-				"variable." , __FILE__, __LINE__);
+			log_fatal("Unable to find a value for 'domain' in either the -d "
+				"argument or the 'GANDI_DNS_DOMAIN' environment variable.");
 			exit(EXIT_FAILURE);
 		}
 	}
 
-	logmsg(INFO, "domain=", domain, __FILE__, __LINE__);
+	log_debug("domain = %s", domain);
 
 	if (subdomain == NULL) {
 		subdomain = getenv("GANDI_DNS_SUBDOMAIN");
 		if (subdomain == NULL || strlen(subdomain) < 1) {
-			logmsg(EMERG, "FATAL: ", "Unable to find a value for 'subdomain' "
-				"in either the -s argument or the 'GANDI_DNS_SUBDOMAIN' "
-				"environment variable.", __FILE__, __LINE__);
+			log_fatal("Unable to find a value for 'subdomain' in either the -s "
+				"argument or the 'GANDI_DNS_SUBDOMAIN' environment variable.");
 			exit(EXIT_FAILURE);
 		}
 	}
 
-	logmsg(INFO, "subdomain=", subdomain, __FILE__, __LINE__);
+	log_debug("subdomain = %s", subdomain);
 
 	if (ipv4_lookup_url == NULL) {
 		ipv4_lookup_url = IPV4_LOOKUP_URL_DEFAULT;
 	}
 
-	logmsg(INFO, "ipv4_lookup_url=", ipv4_lookup_url, __FILE__, __LINE__);
+	log_debug("ipv4_lookup_url = %s", ipv4_lookup_url);
 
 	if (ipv4_lookup_property == NULL) {
 		ipv4_lookup_property = IPV4_LOOKUP_PROPERTY_DEFAULT;
 	}
 
-	logmsg(INFO, "ipv4_lookup_property=", ipv4_lookup_property,
-		__FILE__, __LINE__);
+	log_debug("ipv4_lookup_property = %s", ipv4_lookup_property);
 
 	snprintf(ttl_buffer, TTL_CHAR_BUFSIZE, "%d", ttl);
 
 	if (ttl > LIVEDNS_MAX_TTL) {
 		ttl = LIVEDNS_MAX_TTL;
 		snprintf(ttl_buffer, TTL_CHAR_BUFSIZE, "%d", ttl);
-		logmsg(ERR, "Desired ttl exceeded LIVEDNS_MAX_TTL, capped to ",
-			ttl_buffer, __FILE__, __LINE__);
+		log_warn("Desired ttl exceeded LIVEDNS_MAX_TTL, capped to %s",
+			ttl_buffer);
 	}
 
 	if (ttl < LIVEDNS_MIN_TTL) {
 		ttl = LIVEDNS_MIN_TTL;
 		snprintf(ttl_buffer, TTL_CHAR_BUFSIZE, "%d", ttl);
-		logmsg(ERR, "Desired ttl lower than LIVEDNS_MIN_TTL, increased to ",
-			ttl_buffer, __FILE__, __LINE__);
+		log_warn("Desired ttl lower than LIVEDNS_MIN_TTL, increased to %s",
+			ttl_buffer);
 	}
 
 	snprintf(ttl_buffer, TTL_CHAR_BUFSIZE, "%d", ttl);
-	logmsg(INFO, "ttl=", ttl_buffer, __FILE__, __LINE__);
+	log_debug("ttl = %s", ttl_buffer);
 
 	if (!skip_GET) {
 		root = req_get(ipv4_lookup_url, NULL, &last_status);
 
-		fail_hard_if_null(root, "failed to fetch IPv4 address, no parsable JSON"
-			" response returned", __FILE__, __LINE__);
+		if (root == NULL) {
+			log_fatal("failed to fetch IPv4 address, no parsable JSON "
+				"response returned");
+			exit(EXIT_FAILURE);
+		}
 
 		snprintf(last_status_buffer, 4, "%ld", last_status);
 
-		logmsg(DEBUG, "HTTP status from ipv4_lookup_url=", last_status_buffer,
-			__FILE__, __LINE__);
+		log_debug("HTTP status from ipv4_lookup_url = %s", last_status_buffer);
 
-		logmsg(DEBUG, "response from ipv4_lookup_url=",
-			cJSON_PrintUnformatted(root), __FILE__, __LINE__);
+		log_trace("response from ipv4_lookup_url = %s",
+			cJSON_PrintUnformatted(root));
 
 		if (last_status >= 400) {
-			logmsg(EMERG, "received error response from ipv4_lookup_url=",
-				last_status_buffer, __FILE__, __LINE__);
+			log_fatal("received error response from ipv4_lookup_url = %s",
+				last_status_buffer);
 			exit(EXIT_FAILURE);
 		}
 
@@ -279,7 +280,7 @@ main(int argc, char * argv[])
 			snprintf(current_ipv4, sizeof current_ipv4, "%s",
 				cJSON_GetStringValue(ip));
 			cJSON_free(ip);
-			logmsg(NOTICE, "current_ipv4=", current_ipv4, __FILE__, __LINE__);
+			log_debug("current_ipv4 = %s", current_ipv4);
 		}
 		cJSON_free(root);
 	}
@@ -289,11 +290,10 @@ main(int argc, char * argv[])
 		"https://dns.api.gandi.net/api/v5/domains/%s/records",
 		domain);
 
-	logmsg(DEBUG, "url=", url, __FILE__, __LINE__);
+	log_debug("url = %s", url);
 
 	/* XXX Use malloc here */
-	snprintf(api_key_header, sizeof api_key_header,
-		"X-Api-Key: %s", api_key);
+	snprintf(api_key_header, sizeof api_key_header, "X-Api-Key: %s", api_key);
 
 	options = malloc(sizeof(req_options));
 	headers[0] = api_key_header;
@@ -302,29 +302,30 @@ main(int argc, char * argv[])
 
 	root = req_get(url, options, &last_status);
 
-	fail_hard_if_null(root, "failed to fetch DNS records, no parsable JSON "
-		"response returned from LiveDNS", __FILE__, __LINE__);
+	if (root == NULL) {
+		log_fatal("failed to fetch DNS records, no parsable JSON response "
+			"returned from LiveDNS");
+		exit(EXIT_FAILURE);
+	}
 
 	snprintf(last_status_buffer, 4, "%ld", last_status);
 
-	logmsg(DEBUG, "HTTP status from LiveDNS GET=",
-		last_status_buffer, __FILE__, __LINE__);
+	log_debug("HTTP status from LiveDNS GET = %s", last_status_buffer);
 
-	logmsg(DEBUG, "response from LiveDNS GET=",
-		cJSON_PrintUnformatted(root), __FILE__, __LINE__);
+	log_trace("response from LiveDNS GET= %s", cJSON_PrintUnformatted(root));
 
 	if (last_status >= 400) {
-		logmsg(EMERG, "received an error response from LiveDNS GET=",
-			last_status_buffer, __FILE__, __LINE__);
+		log_error("received an error response from LiveDNS GET = %s",
+			last_status_buffer);
 
 		item = cJSON_GetObjectItem(root, "message");
 
-		fail_hard_if_null(item, "No error message provided",
-			__FILE__, __LINE__);
+		if (item == NULL) {
+			log_fatal("No error message provided");
+			exit(EXIT_FAILURE);
+		}
 
-		logmsg(EMERG, "error=", cJSON_GetStringValue(item),
-			__FILE__, __LINE__);
-
+		log_fatal("error = %s", cJSON_GetStringValue(item));
 		exit(EXIT_FAILURE);
 	}
 
@@ -336,8 +337,8 @@ main(int argc, char * argv[])
 		if (strcmp(cJSON_GetStringValue(type), "A") == 0 &&
 			strcmp(cJSON_GetStringValue(name), subdomain) == 0) {
 
-			logmsg(DEBUG, "found matching record: ",
-				cJSON_PrintUnformatted(item), __FILE__, __LINE__);
+			log_debug("found matching record = %s",
+				cJSON_PrintUnformatted(item));
 
 			update_mode = UPDATE;
 
@@ -345,9 +346,8 @@ main(int argc, char * argv[])
 				if (strcmp(ip->valuestring, current_ipv4) == 0) {
 					update_mode = ACCURATE;
 				} else {
-					logmsg(INFO, "record doesn't have accurate ipv4"
-						" address in A record. Stale value=",
-						ip->valuestring, __FILE__, __LINE__);
+					log_info("Found stale IPv4 address in A record. "
+						"Stale value = %s", ip->valuestring);
 				}
 			}
 		}
@@ -359,23 +359,20 @@ main(int argc, char * argv[])
 
 	switch (update_mode) {
 		case ACCURATE:
-			logmsg(INFO, "Record is in the desired state, nothing to do",
-				NULL, __FILE__, __LINE__);
-			printf("The 'A' record for '%s' is already set to the current "
-				"public IPv4 address of '%s'.\nNothing to do.\n",
+			log_info("The 'A' record for '%s' is already set to the current "
+				"public IPv4 address of '%s'. Nothing to do.",
 				subdomain, current_ipv4);
 		break;
 
 		case UPDATE:
-			logmsg(INFO, "'A' record needs to be updated=",
-				subdomain, __FILE__, __LINE__);
+			log_info("'A' record needs to be updated for '%s'", subdomain);
 			if (dry_run) {
-				logmsg(INFO, "Not proceeding with operation as dry_run was set "
-					"with -x", NULL, __FILE__, __LINE__);
-				printf("The 'A' record for '%s' will be updated with an IPv4 "
-					"address of '%s'.\nNot proceeding with operation as the "
-					"dry_run option was set with -x.\n", subdomain,
-					current_ipv4);
+				log_info("Not proceeding with operation as dry_run was set "
+					"with -x");
+				log_info("The 'A' record for '%s' will be updated with an IPv4 "
+					"address of '%s'. Not proceeding with operation as the "
+					"dry_run option was set with -x.",
+					subdomain, current_ipv4);
 				exit(EXIT_SUCCESS);
 			}
 
@@ -392,28 +389,26 @@ main(int argc, char * argv[])
 
 			root = req_put(url, new_obj, options, &last_status);
 
-			fail_hard_if_null(root, "failed to update DNS record, no parsable "
-				" JSON response returned from LiveDNS", __FILE__, __LINE__);
+			if (root == NULL) {
+				log_fatal("failed to update DNS record, no parsable "
+					"JSON response returned from LiveDNS");
+				exit(EXIT_FAILURE);
+			}
 
 			snprintf(last_status_buffer, 4, "%ld", last_status);
 
-			logmsg(DEBUG, "HTTP status from LiveDNS PUT=", last_status_buffer,
-				__FILE__, __LINE__);
+			log_debug("HTTP status from LiveDNS PUT = %s", last_status_buffer);
 
-			logmsg(DEBUG, "response from LiveDNS PUT=",
-				cJSON_PrintUnformatted(root), __FILE__, __LINE__);
+			log_trace("response from LiveDNS PUT = %s",
+				cJSON_PrintUnformatted(root));
 
 			if (last_status >= 200 && last_status <= 299) {
-				logmsg(NOTICE, "new 'A' record update for ",
-					subdomain, __FILE__, __LINE__);
-				printf("The 'A' record for '%s' was updated to the public IPv4 "
-					"address of '%s'.\n", subdomain, current_ipv4);
+				log_info("The 'A' record for '%s' was updated to the public "
+					"IPv4 address of '%s'", subdomain, current_ipv4);
 			} else {
-				logmsg(CRIT, "'A' record not update for ",
-					subdomain, __FILE__, __LINE__);
-				printf("The 'A' record for '%s' was NOT updated to the public "
-					"IPv4 address of '%s'. Set increased verbosity to see "
-					"details and try again.\n", subdomain, current_ipv4);
+				log_error("The 'A' record for '%s' was NOT updated to the "
+					"public IPv4 address of '%s'. Set increased verbosity to "
+					"see details and try again.", subdomain, current_ipv4);
 			}
 
 			cJSON_free(new_array);
@@ -421,15 +416,14 @@ main(int argc, char * argv[])
 		break;
 
 		case CREATE:
-			logmsg(INFO, "'A' record needs to be created=", subdomain,
-				__FILE__, __LINE__);
+			log_info("'A' record needs to be created = %s", subdomain);
 
 			if (dry_run) {
-				logmsg(INFO, "Not proceeding with operation as dry_run was set "
-					"with -x", NULL, __FILE__, __LINE__);
-				printf("A new 'A' record will be created for '%s' with an IPv4 "
-					"address of '%s'.\nNot proceeding with operation as the "
-					"dry_run option was set with -x.\n",
+				log_info("Not proceeding with operation as dry_run was set "
+					"with -x");
+				log_info("A new 'A' record will be created for '%s' with an IPv4 "
+					"address of '%s'. Not proceeding with operation as the "
+					"dry_run option was set with -x.",
 					subdomain, current_ipv4);
 				exit(EXIT_SUCCESS);
 			}
@@ -443,33 +437,30 @@ main(int argc, char * argv[])
 			cJSON_AddStringToObject(new_obj, "rrset_type", "A");
 			cJSON_AddNumberToObject(new_obj, "rrset_ttl", ttl);
 
-			logmsg(DEBUG, "JSON to be used for record creation=",
-					cJSON_PrintUnformatted(new_obj), __FILE__, __LINE__);
+			log_trace("JSON to be used for record creation = %s",
+					cJSON_PrintUnformatted(new_obj));
 
 			root = req_post(url, new_obj, options, &last_status);
 
-			fail_hard_if_null(root, "failed to create DNS record, no parsable "
-				"JSON response returned from LiveDNS", __FILE__, __LINE__);
+			if (root == NULL) {
+				log_fatal("failed to create DNS record, no parsable "
+					"JSON response returned from LiveDNS");
+				exit(EXIT_FAILURE);
+			}
 
 			snprintf(last_status_buffer, 4, "%ld", last_status);
 
-			logmsg(DEBUG, "HTTP status from LiveDNS POST=",
-				last_status_buffer, __FILE__, __LINE__);
+			log_debug("HTTP status from LiveDNS POST = %s", last_status_buffer);
 
-			logmsg(DEBUG, "response from LiveDNS POST=",
-				cJSON_PrintUnformatted(root), __FILE__, __LINE__);
+			log_trace("response from LiveDNS POST = %s",
+				cJSON_PrintUnformatted(root));
 
 			if (last_status >= 200 && last_status <= 299) {
-				logmsg(NOTICE, "new 'A' record created for ", subdomain,
-					__FILE__, __LINE__);
-				printf("An 'A' record for '%s' was created with the public IPv4"
-					" address of '%s'.\n", subdomain, current_ipv4);
+				log_info("An 'A' record for '%s' was created with the public "
+					"IPv4 address of '%s'", subdomain, current_ipv4);
 			} else {
-				logmsg(CRIT, "'A' record not created for ",
-					subdomain, __FILE__, __LINE__);
-				printf("An 'A' record for '%s' was NOT created with the public "
-					"IPv4 address of '%s'. Set increased verbosity to see more "
-					"details and try again.\n\n", subdomain, current_ipv4);
+				log_error("An 'A' record for '%s' was NOT created with the "
+					"public IPv4 address of '%s'", subdomain, current_ipv4);
 			}
 
 			cJSON_free(new_array);
@@ -480,61 +471,9 @@ main(int argc, char * argv[])
 }
 
 static void
-logmsg(int level, const char * msg, const char * value, const char * file,
-	unsigned int line)
-{
-	char * severity;
-	if (level <= verbosity) {
-		switch (level) {
-			case EMERG:
-				severity = "EMERG";
-				break;
-			case ALERT:
-				severity = "ALERT";
-				break;
-			case CRIT:
-				severity = "CRIT";
-				break;
-			case ERR:
-				severity = "ERR";
-				break;
-			case WARN:
-				severity = "WARN";
-				break;
-			case NOTICE:
-				severity = "NOTICE";
-				break;
-			case DEBUG:
-				severity = "DEBUG";
-				break;
-			case INFO:
-			default:
-				severity = "INFO";
-		}
-		if (value == NULL) {
-			value = "";
-		}
-		fprintf(stderr, "%s,%s:%d,%s%s\n", severity, file, line, msg, value);
-	}
-}
-
-static void
 usage(void)
 {
 	fprintf(stderr, "Usage:\n  %s [-xh] [-i ipv4 lookup] [-p json prop] "
 		"[-t ttl] [-v verbosity] -s subdomain -d domain\n", getprogname());
 	exit(EXIT_FAILURE);
-}
-
-static void
-fail_hard_if_null(void * ptr, const char * msg, const char * file,
-	unsigned int line)
-{
-	if (ptr == NULL) {
-		if (msg == NULL) {
-			msg = "malloc failed";
-		}
-		logmsg(EMERG, msg, NULL, file, line);
-		exit(EXIT_FAILURE);
-	}
 }

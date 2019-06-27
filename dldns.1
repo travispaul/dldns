@@ -43,7 +43,7 @@ Force using the provided ipv4 address and don't use ipv4_lookup_url
 If you set a custom 
 .Ar ipv4_lookup_url
 you can change what propery of the JSON response has the IPv4 address. For example,
-if you have a customer service that returns {"address": "127.0.0.1"} you can set
+if you have a custom service that returns {"address": "127.0.0.1"} you can set
 .Ar ipv4_lookup_json_property
 to "address".
 .It Fl t Ar ttl
@@ -56,14 +56,6 @@ to those limits.
 .It Fl v Ar verbosity
 A value from 0 to 7 of what to log to stderr. See
 VERBOSITY LEVELS for details.
-.El
-.Sh VERBOSE LOGGING
-When specifying a verbosity level with 
-.Fl v
-logs are written to stderr in the following format
-.Bd -literal
-SEVERITY,FILE:LINE,MESSAGE
-.Ed
 .Sh ENVIRONMENT VARIABLES
 The following environment values are honored.
 .Bl -tag -width Ds
@@ -86,21 +78,17 @@ option.
 .It LEVEL
 SEVERITY
 .It 0
-EMERG
+TRACE
 .It 1
-ALERT
-.It 2
-CRIT
-.It 3
-ERR
-.It 4
-WARN
-.It 5
-NOTICE
-.It 6
-INFO
-.It 7
 DEBUG
+.It 2
+INFO
+.It 3
+WARN
+.It 4
+ERROR
+.It 5
+FATAL
 .Sh EXAMPLES
 Create an A record for www.foo.com:
 .Bd -literal
